@@ -3,6 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/peasytools/peasy-pdf-go.svg)](https://pkg.go.dev/github.com/peasytools/peasy-pdf-go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/peasytools/peasy-pdf-go)](https://goreportcard.com/report/github.com/peasytools/peasy-pdf-go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![GitHub stars](https://agentgif.com/badge/github/peasytools/peasy-pdf-go/stars.svg)](https://github.com/peasytools/peasy-pdf-go)
 
 Go client for the [PeasyPDF](https://peasypdf.com) API — merge, split, rotate, and compress PDF files. Built with `net/http`, `encoding/json`, and zero external dependencies.
 

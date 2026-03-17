@@ -4,11 +4,30 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/peasytools/peasy-pdf-go)](https://goreportcard.com/report/github.com/peasytools/peasy-pdf-go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-Go client for the [PeasyPDF](https://peasypdf.com) API — PDF merge, split, rotate, and compress. Zero dependencies beyond the Go standard library.
+Go client for the [PeasyPDF](https://peasypdf.com) API — merge, split, rotate, and compress PDF files. Built with `net/http`, `encoding/json`, and zero external dependencies.
 
-Built from [PeasyPDF](https://peasypdf.com), a comprehensive PDF toolkit offering free online tools for merging, splitting, rotating, compressing, and converting PDF documents with detailed format guides and glossary.
+Built from [PeasyPDF](https://peasypdf.com), a comprehensive PDF toolkit offering free online tools for merging, splitting, rotating, compressing, and converting PDF documents. The site includes detailed guides on PDF optimization, accessibility best practices, and format conversion, plus a glossary covering terms from linearization to OCR to PDF/A archival compliance.
 
-> **Try the interactive tools at [peasypdf.com](https://peasypdf.com)** — [PDF Tools](https://peasypdf.com/), [PDF Glossary](https://peasypdf.com/glossary/), [PDF Guides](https://peasypdf.com/guides/)
+> **Try the interactive tools at [peasypdf.com](https://peasypdf.com)** — [Merge PDF](https://peasypdf.com/pdf/merge-pdf/), [Split PDF](https://peasypdf.com/pdf/split-pdf/), [Compress PDF](https://peasypdf.com/pdf/compress-pdf/), [Rotate PDF](https://peasypdf.com/pdf/rotate-pdf/), and more.
+
+<p align="center">
+  <img src="demo.gif" alt="peasy-pdf-go demo — PDF merge, split, and compress tools in Go terminal" width="800">
+</p>
+
+## Table of Contents
+
+- [Install](#install)
+- [Quick Start](#quick-start)
+- [What You Can Do](#what-you-can-do)
+  - [PDF Document Operations](#pdf-document-operations)
+  - [Browse Reference Content](#browse-reference-content)
+  - [Search and Discovery](#search-and-discovery)
+- [API Client](#api-client)
+  - [Available Methods](#available-methods)
+- [Learn More About PDF Tools](#learn-more-about-pdf-tools)
+- [Also Available](#also-available)
+- [Peasy Developer Tools](#peasy-developer-tools)
+- [License](#license)
 
 ## Install
 
@@ -45,6 +64,107 @@ func main() {
 	}
 }
 ```
+
+## What You Can Do
+
+### PDF Document Operations
+
+The Portable Document Format (PDF) was created by Adobe in 1993 and became an open ISO standard (ISO 32000) in 2008. Today PDF is the most widely used format for document exchange, supporting text, images, forms, digital signatures, and embedded multimedia. PeasyPDF provides tools for every common PDF workflow — from merging invoices into a single file to compressing scanned documents for email delivery.
+
+| Operation | Slug | Description |
+|-----------|------|-------------|
+| Merge PDF | `pdf-merge` | Combine multiple PDF documents into one file |
+| Split PDF | `pdf-split` | Extract specific pages or split into individual files |
+| Compress PDF | `pdf-compress` | Reduce file size by optimizing images and removing metadata |
+| Rotate PDF | `pdf-rotate` | Rotate pages by 90, 180, or 270 degrees |
+| PDF to PNG | `pdf-to-png` | Convert PDF pages to high-resolution PNG images |
+
+```go
+// Retrieve the PDF merge tool and inspect its capabilities
+client := peasypdf.New()
+ctx := context.Background()
+
+// Get detailed information about the merge tool
+tool, err := client.GetTool(ctx, "pdf-merge")
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("Tool: %s\n", tool.Name)         // PDF merge tool name
+fmt.Printf("Description: %s\n", tool.Description) // How merging works
+
+// List all available PDF tools with pagination
+tools, err := client.ListTools(ctx, &peasypdf.ListOptions{Page: 1, Limit: 20})
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("Total PDF tools available: %d\n", tools.Count)
+```
+
+Learn more: [Merge PDF Tool](https://peasypdf.com/pdf/merge-pdf/) · [How to Merge PDF Files](https://peasypdf.com/guides/how-to-merge-pdf-files/) · [PDF Compression Guide](https://peasypdf.com/guides/pdf-compression-guide/)
+
+### Browse Reference Content
+
+PeasyPDF includes a comprehensive glossary of document format terminology and in-depth guides for common workflows. The glossary covers foundational concepts like PDF linearization (web-optimized PDFs that load page-by-page), OCR (optical character recognition for scanned documents), DPI (dots per inch for print-quality output), and PDF/A (the ISO 19005 archival standard used by governments and libraries worldwide).
+
+| Term | Description |
+|------|-------------|
+| [PDF](https://peasypdf.com/glossary/pdf/) | Portable Document Format — ISO 32000 open standard |
+| [PDF/A](https://peasypdf.com/glossary/pdfa/) | Archival PDF subset (ISO 19005) for long-term preservation |
+| [DPI](https://peasypdf.com/glossary/dpi/) | Dots per inch — resolution metric for print and rasterization |
+| [OCR](https://peasypdf.com/glossary/ocr/) | Optical character recognition for searchable scanned PDFs |
+| [Rasterization](https://peasypdf.com/glossary/rasterization/) | Converting vector PDF content to pixel-based images |
+
+```go
+// Browse the PDF glossary for document format terminology
+glossary, err := client.ListGlossary(ctx, &peasypdf.ListOptions{
+	Search: str("linearization"), // Search for web-optimized PDF concepts
+})
+if err != nil {
+	log.Fatal(err)
+}
+for _, term := range glossary.Results {
+	fmt.Printf("%s: %s\n", term.Term, term.Definition)
+}
+
+// Read a specific guide on PDF accessibility best practices
+guide, err := client.GetGuide(ctx, "accessible-pdf-best-practices")
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("Guide: %s (Level: %s)\n", guide.Title, guide.AudienceLevel)
+```
+
+Learn more: [PDF Glossary](https://peasypdf.com/glossary/) · [Accessible PDF Best Practices](https://peasypdf.com/guides/accessible-pdf-best-practices/) · [How to Convert PDF to Images](https://peasypdf.com/guides/how-to-convert-pdf-to-images/)
+
+### Search and Discovery
+
+The API supports full-text search across all content types — tools, glossary terms, guides, use cases, and format documentation. Search results are grouped by content type, making it easy to find exactly what you need for a specific PDF workflow.
+
+```go
+// Search across all PDF content — tools, glossary, guides, and formats
+results, err := client.Search(ctx, "compress pdf", nil)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("Found %d tools, %d glossary terms, %d guides\n",
+	len(results.Results.Tools),
+	len(results.Results.Glossary),
+	len(results.Results.Guides),
+)
+
+// Discover format conversion paths — what can PDF convert to?
+conversions, err := client.ListConversions(ctx, &peasypdf.ListConversionsOptions{
+	Source: str("pdf"), // Find all formats PDF can be converted to
+})
+if err != nil {
+	log.Fatal(err)
+}
+for _, c := range conversions.Results {
+	fmt.Printf("%s → %s\n", c.SourceFormat, c.TargetFormat)
+}
+```
+
+Learn more: [REST API Docs](https://peasypdf.com/developers/) · [All PDF Tools](https://peasypdf.com/)
 
 ## API Client
 
@@ -115,12 +235,12 @@ func str(s string) *string { return &s }
 Full API documentation at [peasypdf.com/developers/](https://peasypdf.com/developers/).
 OpenAPI 3.1.0 spec: [peasypdf.com/api/openapi.json](https://peasypdf.com/api/openapi.json).
 
-## Learn More
+## Learn More About PDF Tools
 
-- **Tools**: [PDF Merge](https://peasypdf.com/pdf/merge-pdf/) · [PDF Split](https://peasypdf.com/pdf/split-pdf/) · [PDF Compress](https://peasypdf.com/pdf/compress-pdf/) · [All Tools](https://peasypdf.com/)
-- **Guides**: [PDF Compression Guide](https://peasypdf.com/guides/pdf-compression-guide/) · [How to Merge PDF Files](https://peasypdf.com/guides/how-to-merge-pdf-files/) · [All Guides](https://peasypdf.com/guides/)
-- **Glossary**: [PDF](https://peasypdf.com/glossary/pdf/) · [Linearization](https://peasypdf.com/glossary/linearization/) · [OCR](https://peasypdf.com/glossary/ocr/) · [All Terms](https://peasypdf.com/glossary/)
-- **Formats**: [PDF](https://peasypdf.com/formats/pdf/) · [PDF/A](https://peasypdf.com/formats/) · [All Formats](https://peasypdf.com/formats/)
+- **Tools**: [Merge PDF](https://peasypdf.com/pdf/merge-pdf/) · [Split PDF](https://peasypdf.com/pdf/split-pdf/) · [Compress PDF](https://peasypdf.com/pdf/compress-pdf/) · [Rotate PDF](https://peasypdf.com/pdf/rotate-pdf/) · [PDF to PNG](https://peasypdf.com/pdf/pdf-to-png/) · [All Tools](https://peasypdf.com/)
+- **Guides**: [How to Merge PDF Files](https://peasypdf.com/guides/how-to-merge-pdf-files/) · [PDF Compression Guide](https://peasypdf.com/guides/pdf-compression-guide/) · [Accessible PDF Best Practices](https://peasypdf.com/guides/accessible-pdf-best-practices/) · [How to Convert PDF to Images](https://peasypdf.com/guides/how-to-convert-pdf-to-images/) · [All Guides](https://peasypdf.com/guides/)
+- **Glossary**: [PDF](https://peasypdf.com/glossary/pdf/) · [PDF/A](https://peasypdf.com/glossary/pdfa/) · [DPI](https://peasypdf.com/glossary/dpi/) · [OCR](https://peasypdf.com/glossary/ocr/) · [Rasterization](https://peasypdf.com/glossary/rasterization/) · [All Terms](https://peasypdf.com/glossary/)
+- **Formats**: [All Formats](https://peasypdf.com/formats/)
 - **API**: [REST API Docs](https://peasypdf.com/developers/) · [OpenAPI Spec](https://peasypdf.com/api/openapi.json)
 
 ## Also Available

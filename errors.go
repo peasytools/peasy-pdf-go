@@ -9,7 +9,7 @@ type PeasyError struct {
 }
 
 func (e *PeasyError) Error() string {
-	return fmt.Sprintf("peasy api error (HTTP %d): %s", e.StatusCode, e.Message)
+	return fmt.Sprintf("peasypdf: api error (HTTP %d): %s", e.StatusCode, e.Message)
 }
 
 // NotFoundError is returned when a resource is not found (404).
@@ -19,5 +19,5 @@ type NotFoundError struct {
 }
 
 func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("%s not found: %s", e.Resource, e.Identifier)
+	return fmt.Sprintf("peasypdf: %s not found: %s", e.Resource, e.Identifier)
 }

@@ -1,7 +1,9 @@
 package peasypdf
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -19,8 +21,8 @@ func paginatedJSON(t *testing.T, results any, count int) string {
 
 func TestNew(t *testing.T) {
 	c := New()
-	if c.baseURL != defaultBaseURL {
-		t.Errorf("expected %s, got %s", defaultBaseURL, c.baseURL)
+	if c.baseURL != DefaultBaseURL {
+		t.Errorf("expected %s, got %s", DefaultBaseURL, c.baseURL)
 	}
 	c2 := New(WithBaseURL("https://example.com"))
 	if c2.baseURL != "https://example.com" {
@@ -28,7 +30,15 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestWithBaseURLTrailingSlash(t *testing.T) {
+	c := New(WithBaseURL("https://example.com/"))
+	if c.baseURL != "https://example.com" {
+		t.Errorf("expected trailing slash stripped, got %s", c.baseURL)
+	}
+}
+
 func TestListTools(t *testing.T) {
+	ctx := context.Background()
 	tools := []Tool{{Slug: "pdf-merge", Name: "PDF Merge", Description: "Merge PDFs", Category: "pdf"}}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/v1/tools/" {
@@ -39,7 +49,7 @@ func TestListTools(t *testing.T) {
 	defer srv.Close()
 
 	c := New(WithBaseURL(srv.URL))
-	resp, err := c.ListTools()
+	resp, err := c.ListTools(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,6 +62,7 @@ func TestListTools(t *testing.T) {
 }
 
 func TestListToolsWithSearch(t *testing.T) {
+	ctx := context.Background()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if q := r.URL.Query().Get("search"); q != "merge" {
 			t.Errorf("expected search=merge, got %s", q)
@@ -61,13 +72,14 @@ func TestListToolsWithSearch(t *testing.T) {
 	defer srv.Close()
 
 	c := New(WithBaseURL(srv.URL))
-	_, err := c.ListTools(ListOptions{Search: "merge"})
+	_, err := c.ListTools(ctx, ListOptions{Search: "merge"})
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestGetTool(t *testing.T) {
+	ctx := context.Background()
 	tool := Tool{Slug: "pdf-merge", Name: "PDF Merge", Description: "Merge PDFs", Category: "pdf"}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/v1/tools/pdf-merge/" {
@@ -78,7 +90,7 @@ func TestGetTool(t *testing.T) {
 	defer srv.Close()
 
 	c := New(WithBaseURL(srv.URL))
-	got, err := c.GetTool("pdf-merge")
+	got, err := c.GetTool(ctx, "pdf-merge")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,6 +100,7 @@ func TestGetTool(t *testing.T) {
 }
 
 func TestListGlossary(t *testing.T) {
+	ctx := context.Background()
 	terms := []GlossaryTerm{{Slug: "pdf-a", Term: "PDF/A", Definition: "Archival PDF", Category: "standards"}}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, paginatedJSON(t, terms, 1))
@@ -95,7 +108,7 @@ func TestListGlossary(t *testing.T) {
 	defer srv.Close()
 
 	c := New(WithBaseURL(srv.URL))
-	resp, err := c.ListGlossary()
+	resp, err := c.ListGlossary(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,6 +118,7 @@ func TestListGlossary(t *testing.T) {
 }
 
 func TestGetGlossaryTerm(t *testing.T) {
+	ctx := context.Background()
 	term := GlossaryTerm{Slug: "pdf-a", Term: "PDF/A", Definition: "Archival PDF", Category: "standards"}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(term)
@@ -112,7 +126,7 @@ func TestGetGlossaryTerm(t *testing.T) {
 	defer srv.Close()
 
 	c := New(WithBaseURL(srv.URL))
-	got, err := c.GetGlossaryTerm("pdf-a")
+	got, err := c.GetGlossaryTerm(ctx, "pdf-a")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,6 +136,7 @@ func TestGetGlossaryTerm(t *testing.T) {
 }
 
 func TestListGuides(t *testing.T) {
+	ctx := context.Background()
 	guides := []Guide{{Slug: "compress-pdf", Title: "How to Compress PDFs", Category: "optimization", AudienceLevel: "beginner", WordCount: 1200}}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, paginatedJSON(t, guides, 1))
@@ -129,7 +144,7 @@ func TestListGuides(t *testing.T) {
 	defer srv.Close()
 
 	c := New(WithBaseURL(srv.URL))
-	resp, err := c.ListGuides()
+	resp, err := c.ListGuides(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,6 +154,7 @@ func TestListGuides(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
+	ctx := context.Background()
 	result := SearchResult{
 		Query: "merge",
 		Results: SearchCategories{
@@ -156,7 +172,7 @@ func TestSearch(t *testing.T) {
 	defer srv.Close()
 
 	c := New(WithBaseURL(srv.URL))
-	got, err := c.Search("merge")
+	got, err := c.Search(ctx, "merge")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,6 +182,7 @@ func TestSearch(t *testing.T) {
 }
 
 func TestNotFoundError(t *testing.T) {
+	ctx := context.Background()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, `{"detail":"Not found."}`)
@@ -173,16 +190,18 @@ func TestNotFoundError(t *testing.T) {
 	defer srv.Close()
 
 	c := New(WithBaseURL(srv.URL))
-	_, err := c.GetTool("nonexistent")
+	_, err := c.GetTool(ctx, "nonexistent")
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if _, ok := err.(*NotFoundError); !ok {
+	var nfe *NotFoundError
+	if !errors.As(err, &nfe) {
 		t.Errorf("expected NotFoundError, got %T", err)
 	}
 }
 
 func TestServerError(t *testing.T) {
+	ctx := context.Background()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Internal Server Error")
@@ -190,12 +209,12 @@ func TestServerError(t *testing.T) {
 	defer srv.Close()
 
 	c := New(WithBaseURL(srv.URL))
-	_, err := c.ListTools()
+	_, err := c.ListTools(ctx)
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	pe, ok := err.(*PeasyError)
-	if !ok {
+	var pe *PeasyError
+	if !errors.As(err, &pe) {
 		t.Errorf("expected PeasyError, got %T", err)
 	}
 	if pe.StatusCode != 500 {
